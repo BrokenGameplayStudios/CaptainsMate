@@ -117,7 +117,11 @@ async def invite_team(ctx, user_id_or_mention, team_name, division):
     if user_id in users:
         if team_name in users[user_id]['teams']:
             team_owner = ctx.author.name
-            await ctx.send(f'You have invited {user_id_or_mention} to join your team {team_name} in {division} division!')
+            # Get the team ID
+            team_id = get_team_id(team_name)
+            # Send the invite message to the user
+            await send_team_invite_message(user_id_or_mention, team_id)
+            await ctx.send(f'You have invited {user_id_or_mention} to join your team {team_name} in {division}!')
         else:
             await ctx.send('You do not have a team with that name!')
     else:
