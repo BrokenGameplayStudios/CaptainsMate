@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 import moment
+import json
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -22,13 +23,24 @@ async def notify_team_owner(user_id: int, team_id: int, response: str):
         notification_message = "{} has declined the team invite!".format(user_id)
     await bot.send_message(team_owner_id, notification_message)
 
-
+def get_team_id(team_name):
+    for team_id, team in teams.items():
+        if team['name'] == team_name:
+            return team_id
+    return None
 
 # Initialize a dictionary to store user data
 users = {}
 
 # Initialize a dictionary to store team data
 teams = {}
+
+# Save the dictionaries to a file
+with open('users.json', 'w') as f:
+    json.dump(users, f)
+
+with open('teams.json', 'w') as f:
+    json.dump(teams, f)
 
 @bot.event
 async def on_ready():
@@ -119,9 +131,15 @@ async def invite_team(ctx, user_id_or_mention, team_name, division):
             team_owner = ctx.author.name
             # Get the team ID
             team_id = get_team_id(team_name)
-            # Send the invite message to the user
-            await send_team_invite_message(user_id_or_mention, team_id)
-            await ctx.send(f'You have invited {user_id_or_mention} to join your team {team_name} in {division}!')
+            # Get the user ID from the mention
+            user = ctx.guild.get_member(int(user_id_or_mention.strip('<@!>')))
+            if user:
+                user_id = user.id
+                # Send the invite message to the user
+                await send_team_invite_message(user_id, team_id)
+                await ctx.send(f'You have invited {user_id_or_mention} to join your team {team_name} in {division}!')
+            else:
+                await ctx.send('The user you mentioned does not exist.')
         else:
             await ctx.send('You do not have a team with that name!')
     else:
