@@ -6,7 +6,9 @@ Captain's Mate is a versatile Discord bot designed to help captains with the cha
 2. Create a virtual environment: `python -m venv env`
 3. Activate the virtual environment: `.\env\Scripts\activate` (on Windows) or `source env/bin/activate` (on Linux/Mac)
 4. Install the required packages: `pip install -r requirements.txt`
-5. Run the application: `python CaptainsMate.py`
+5. Create a Discord bot and obtain a token: https://discord.com/developers/applications
+6. Update `CaptainsMate.py` with the token: `bot.run('YOUR_TOKEN_HERE')`
+7. Run the application: `python CaptainsMate.py`
 
 ## Usage
 
