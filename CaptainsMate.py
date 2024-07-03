@@ -31,6 +31,25 @@ async def send_message(user_id: int, message: str):
     user = await bot.fetch_user(user_id)
     await user.send(message)
 
+@bot.command(name='accept')
+async def accept(ctx):
+    team_name = ctx.args[0]  # Get the team name from the command argument
+    user_id = ctx.author.id
+    
+    # Add the user to the team in teams.json
+    with open("teams.json", "r") as f:
+        teams = json.load(f)
+    team = next((team for team in teams if team["team_name"] == team_name), None)
+    if team is None:
+        await ctx.send(f"Team '{team_name}' does not exist.")
+        return
+    team["members"].append({"user_id": user_id, "username": ctx.author.name, "available_time": ""})
+    with open("teams.json", "w") as f:
+        json.dump(teams, f, indent=4)
+    
+    # Send a confirmation message to the user
+    await ctx.send(f"You have joined {team_name}!")
+
 async def send_team_invite_message(ctx, user_id, team_name):
     try:
         user = await bot.fetch_user(user_id)
