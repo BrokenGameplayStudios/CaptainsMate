@@ -3,4 +3,4 @@ discord.py==2.3.2
 aiohttp==3.9.3
 multidict==6.0.5
 yarl==1.9.4
-moment==2.29.4
+moment
