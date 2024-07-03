@@ -2,13 +2,15 @@
 Captain's Mate is a versatile Discord bot designed to help captains with the challenging task of scheduling matches. It takes the stress out of planning and organizing, allowing captains to focus on leading their teams to victory.
 
 ## Installation
-1. Clone the repository: `git clone https://github.com/BrokenGameplayStudios/CaptainsMate.git`
-2. Create a virtual environment: `python -m venv env`
-3. Activate the virtual environment: `.\env\Scripts\activate` (on Windows) or `source env/bin/activate` (on Linux/Mac)
-4. Install the required packages: `pip install -r requirements.txt`
-5. Create a Discord bot and obtain a token: https://discord.com/developers/applications
-6. Update `CaptainsMate.py` with the token: `bot.run('YOUR_TOKEN_HERE')`
-7. Run the application: `python CaptainsMate.py`
+1. **Clone the repository**: `git clone https://github.com/BrokenGameplayStudios/CaptainsMate.git`
+2. **Create a virtual environment**: `python -m venv env`
+3. **Activate the virtual environment**:
+   - On Windows: `.\env\Scripts\activate`
+   - On Linux/Mac: `source env/bin/activate`
+4. **Install the required packages**: `pip install -r requirements.txt`
+5. **Create a Discord bot and obtain a token**: https://discord.com/developers/applications
+6. **Update `CaptainsMate.py` with the token**: `bot.run('YOUR_TOKEN_HERE')`
+7. **Run the application**: `python CaptainsMate.py`
 
 ## Usage
 
