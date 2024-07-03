@@ -27,14 +27,43 @@ intents = discord.Intents.default()
 intents.message_content = True
 
 bot = commands.Bot(command_prefix='!', intents=intents)
-
 async def send_message(user_id: int, message: str):
     user = await bot.fetch_user(user_id)
     await user.send(message)
 
-async def send_team_invite_message(user_id: int, team_id: int):
-    invite_message = "You have been invited to join Team {}! Reply with 'Accept' or 'Decline' to respond.".format(team_id)
-    await send_message(user_id, invite_message)
+async def send_team_invite_message(ctx, user_id, team_name):
+    user = ctx.guild.get_member(user_id)
+    if user is None:
+        # Handle the case where the user does not exist in the server
+        await ctx.send(f"The user with ID {user_id} is not in this server.")
+        return
+    await user.send(f"You have been invited to {team_name} by {ctx.author.name}. Type '!accept {team_name}' to join the team.")
+
+    # Wait for the user's response
+    def check(m):
+        return m.author.id == user_id and m.content.startswith("!accept")
+    try:
+        msg = await bot.wait_for("message", check=check, timeout=60)
+    except asyncio.TimeoutError:
+        await bot.get_user(user_id).send(f"You did not respond to the invitation within 60 seconds.")
+        return
+
+    # Check if the user accepted the invitation
+    if msg.content.split()[1] != team_name:
+        await bot.get_user(user_id).send(f"You did not accept the invitation.")
+        return
+
+    # Add the user to the team in teams.json
+    with open("teams.json", "r") as f:
+        teams = json.load(f)
+    team = next((team for team in teams if team["team_name"] == team_name), None)
+    if team is None:
+        await bot.get_user(user_id).send(f"Team '{team_name}' does not exist!")
+        return
+    team["members"].append({"user_id": user_id, "username": user.name, "available_time": ""})
+    with open("teams.json", "w") as f:
+        json.dump(teams, f, indent=4)
+    await bot.get_user(user_id).send(f"You have joined {team_name}!")       
 
 async def notify_team_owner(user_id: int, team_id: int, response: str):
     team_owner_id = get_team_owner_id(team_id)
@@ -178,7 +207,7 @@ async def invite_team(ctx, user_mention, team_name, division):
                     await ctx.send('The user you mentioned does not exist.')
                     return
 
-            await send_team_invite_message(user.id, team_name)
+            await send_team_invite_message(ctx, user.id, team_name)
             await ctx.send(f'You have invited {user.mention} to join your team {team_name} in {division}!')
         else:
             await ctx.send('You do not have a team with that name!')
