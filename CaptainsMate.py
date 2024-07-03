@@ -145,23 +145,51 @@ async def list_my_times(ctx):
         await ctx.send('You are not registered!')
 
 @bot.command(name='inviteteam')
-async def invite_team(ctx, user_id_or_mention, team_name, division):
-    user_id = ctx.author.id
-    if str(user_id) in users:
-        if team_name in users[str(user_id)]['teams']:
-            team_owner = ctx.author.name
-            team_id = get_team_id(team_name)
-            user = ctx.guild.get_member(int(user_id_or_mention.strip('<@!>')))
-            if user:
-                user_id = user.id
-                await send_team_invite_message(user_id, team_id)
-                await ctx.send(f'You have invited {user_id_or_mention} to join your team {team_name} in {division}!')
+async def invite_team(ctx, user_mention, team_name, division):
+    user_id = str(ctx.author.id)
+    if user_id in users:
+        if team_name in users[user_id]['teams']:
+            if user_mention.startswith('<@') and user_mention.endswith('>'):
+                user_id_or_mention = user_mention[2:-1]
+                if user_id_or_mention.startswith('!'):
+                    user_id_or_mention = user_id_or_mention[1:]
             else:
-                await ctx.send('The user you mentioned does not exist.')
+                await ctx.send('Invalid user mention format.')
+                return
+
+            try:
+                user_id_or_mention = int(user_id_or_mention)
+            except ValueError:
+                await ctx.send('Invalid user mention or ID.')
+                return
+
+            user = ctx.guild.get_member(user_id_or_mention)
+            if not user:
+                # User is not found in the guild, check users.json
+                if str(user_id_or_mention) in users:
+                    user = users[str(user_id_or_mention)]
+                    # Mock user object with just the id
+                    class MockUser:
+                        def __init__(self, id):
+                            self.id = id
+                            self.mention = f'<@{id}>'
+                    user = MockUser(user_id_or_mention)
+                else:
+                    await ctx.send('The user you mentioned does not exist.')
+                    return
+
+            await send_team_invite_message(user.id, team_name)
+            await ctx.send(f'You have invited {user.mention} to join your team {team_name} in {division}!')
         else:
             await ctx.send('You do not have a team with that name!')
     else:
         await ctx.send('You are not registered!')
+
+def get_team_owner_id(team_name):
+    for user_id, user_data in users.items():
+        if team_name in user_data['teams']:
+            return int(user_id)
+    return None
 
 @bot.command(name='removeteammember')
 async def remove_team_member(ctx, user_id_or_mention, team_name):
@@ -169,12 +197,21 @@ async def remove_team_member(ctx, user_id_or_mention, team_name):
     if str(user_id) in users:
         if team_name in users[str(user_id)]['teams']:
             team_owner = ctx.author.name
-            user = ctx.guild.get_member(int(user_id_or_mention.strip('<@!>')))
+            if user_id_or_mention.startswith('<@') and user_id_or_mention.endswith('>'):
+                user_id_or_mention = user_id_or_mention[2:-1]
+                if user_id_or_mention.startswith('!'):
+                    user_id_or_mention = user_id_or_mention[1:]
+            try:
+                user_id_or_mention = int(user_id_or_mention)
+            except ValueError:
+                await ctx.send('Invalid user mention or ID.')
+                return
+            user = ctx.guild.get_member(user_id_or_mention)
             if user and user.id in users:
                 users[str(user.id)]['teams'].pop(team_name, None)
                 with open('users.json', 'w') as f:
                     json.dump(users, f)
-                await ctx.send(f'You have removed {user_id_or_mention} from your team {team_name}!')
+                await ctx.send(f'You have removed {user.mention} from your team {team_name}!')
             else:
                 await ctx.send('The user you mentioned does not exist or is not part of the team.')
         else:
@@ -193,7 +230,7 @@ async def leave_team(ctx, team_name):
                 json.dump(users, f)
             await ctx.send(f'You have left the team {team_name}!')
         else:
-            await ctx.send('You are not part of that team!')
+            await ctx.send('You are not part of a team with that name!')
     else:
         await ctx.send('You are not registered!')
 
