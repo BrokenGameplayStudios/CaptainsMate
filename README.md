@@ -9,7 +9,7 @@ To install CaptainsMate, follow these steps:
 2. Create a virtual environment: `python -m venv env`
 3. Activate the virtual environment: `source env/bin/activate` (on Linux/macOS) or `env\Scripts\activate` (on Windows)
 4. Install the dependencies: `pip install -r requirements.txt`
-5. Run the script: `python main.py`
+5. Run the script: `python3 CaptainsMate.py`
 
 ## Usage
 
