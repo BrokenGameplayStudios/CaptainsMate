@@ -32,38 +32,42 @@ async def send_message(user_id: int, message: str):
     await user.send(message)
 
 async def send_team_invite_message(ctx, user_id, team_name):
-    user = ctx.guild.get_member(user_id)
-    if user is None:
-        # Handle the case where the user does not exist in the server
-        await ctx.send(f"The user with ID {user_id} is not in this server.")
-        return
-    await user.send(f"You have been invited to {team_name} by {ctx.author.name}. Type '!accept {team_name}' to join the team.")
-
-    # Wait for the user's response
-    def check(m):
-        return m.author.id == user_id and m.content.startswith("!accept")
     try:
-        msg = await bot.wait_for("message", check=check, timeout=60)
-    except asyncio.TimeoutError:
-        await bot.get_user(user_id).send(f"You did not respond to the invitation within 60 seconds.")
-        return
+        user = await bot.fetch_user(user_id)
+        if user is None:
+            # Handle the case where the user does not exist
+            await ctx.send(f"The user with ID {user_id} does not exist.")
+            return
+        await user.send(f"You have been invited to {team_name} by {ctx.author.name}. Type '!accept {team_name}' to join the team.")
 
-    # Check if the user accepted the invitation
-    if msg.content.split()[1] != team_name:
-        await bot.get_user(user_id).send(f"You did not accept the invitation.")
-        return
+        # Wait for the user's response
+        def check(m):
+            return m.author.id == user_id and m.content.startswith("!accept")
+        try:
+            msg = await bot.wait_for("message", check=check, timeout=60)
+        except asyncio.TimeoutError:
+            await bot.get_user(user_id).send(f"You did not respond to the invitation within 60 seconds.")
+            return
 
-    # Add the user to the team in teams.json
-    with open("teams.json", "r") as f:
-        teams = json.load(f)
-    team = next((team for team in teams if team["team_name"] == team_name), None)
-    if team is None:
-        await bot.get_user(user_id).send(f"Team '{team_name}' does not exist!")
+        # Check if the user accepted the invitation
+        if len(msg.content.split()) < 2 or msg.content.split()[1] != team_name:
+            await bot.get_user(user_id).send(f"You did not accept the invitation.")
+            return
+
+        # Add the user to the team in teams.json
+        with open("teams.json", "r") as f:
+            teams = json.load(f)
+        team = next((team for team in teams if team["team_name"] == team_name), None)
+        if team is None:
+            await bot.get_user(user_id).send(f"Team '{team_name}' does not exist.")
+            return
+        team["members"].append({"user_id": user_id, "username": user.name, "available_time": ""})
+        with open("teams.json", "w") as f:
+            json.dump(teams, f, indent=4)
+        await bot.get_user(user_id).send(f"You have joined {team_name}!")
+    except discord.errors.NotFound:
+        await ctx.send(f"User {user_id} not found on this server.")
         return
-    team["members"].append({"user_id": user_id, "username": user.name, "available_time": ""})
-    with open("teams.json", "w") as f:
-        json.dump(teams, f, indent=4)
-    await bot.get_user(user_id).send(f"You have joined {team_name}!")       
 
 async def notify_team_owner(user_id: int, team_id: int, response: str):
     team_owner_id = get_team_owner_id(team_id)
